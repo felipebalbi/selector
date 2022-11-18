@@ -8,7 +8,7 @@ use std::{
     fs::File,
     io::{stdin, stdout, BufRead, BufReader, Write},
 };
-use termion::{color, input::TermRead, raw::IntoRawMode, style};
+use termion::{color, event::Key, input::TermRead, raw::IntoRawMode, style};
 
 pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
@@ -89,28 +89,37 @@ pub fn run(config: Config) -> Result<()> {
 
             let mut data = data.iter();
 
-            for _key in stdin.keys() {
-                if let Some(draw) = data.next() {
-                    write!(
-                        stdout,
-                        "{}{}{}",
-                        termion::cursor::Goto(5, 3),
-                        termion::clear::CurrentLine,
-                        draw
-                    )?;
-                    stdout.flush()?;
-                } else {
-                    write!(
-                        stdout,
-                        "{}{}",
-                        termion::clear::All,
-                        termion::cursor::Goto(1, 1)
-                    )?;
-                    stdout.flush()?;
-                    break;
+            for key in stdin.keys() {
+                let key = key?;
+
+                match key {
+                    Key::Ctrl('q') | Key::Ctrl('c') => {
+                        break;
+                    }
+                    _ => {
+                        if let Some(draw) = data.next() {
+                            write!(
+                                stdout,
+                                "{}{}{}",
+                                termion::cursor::Goto(5, 3),
+                                termion::clear::CurrentLine,
+                                draw
+                            )?;
+                            stdout.flush()?;
+                        } else {
+                            break;
+                        }
+                    }
                 }
             }
 
+            write!(
+                stdout,
+                "{}{}",
+                termion::clear::All,
+                termion::cursor::Goto(1, 1)
+            )?;
+            stdout.flush()?;
             write!(stdout, "{}", termion::cursor::Show).unwrap();
         }
     }
