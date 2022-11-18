@@ -1,4 +1,5 @@
 use clap::Parser;
+use itertools::{iproduct, Itertools};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::{
@@ -69,7 +70,7 @@ pub fn run(config: Config) -> Result<()> {
                 })
                 .collect::<Vec<_>>();
             let mut rng = thread_rng();
-            let mut data = cartesian_product(&lines)?;
+            let mut data = cartesian_product(&lines);
 
             data.shuffle(&mut rng);
 
@@ -116,17 +117,9 @@ pub fn run(config: Config) -> Result<()> {
     Ok(())
 }
 
-fn cartesian_product<'a>(input: &'a [String]) -> Result<Vec<Draw>> {
-    let pairs = input
-        .iter()
-        .flat_map(|fst| {
-            input
-                .iter()
-                .map(|snd| Draw::new(fst, snd))
-                .collect::<Vec<_>>()
-        })
-        .filter(|draw| draw.from != draw.to)
-        .collect::<Vec<_>>();
-
-    Ok(pairs)
+fn cartesian_product(lines: &[String]) -> Vec<Draw> {
+    iproduct!(lines.iter(), lines.iter())
+        .filter(|(a, b)| a != b)
+        .map(|(a, b)| Draw::new(a, b))
+        .collect_vec()
 }
