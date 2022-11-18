@@ -18,7 +18,7 @@ pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 pub struct Config {
     #[arg(
         num_args = 1,
-        default_value = "-",
+        required = true,
         value_name = "FILE",
         help = "Input file"
     )]
@@ -43,9 +43,10 @@ impl<'a> Display for Draw<'a> {
 }
 
 pub fn run(config: Config) -> Result<()> {
-    match open(&config.file) {
+    match File::open(&config.file) {
         Err(e) => eprintln!("Failed to open {}: {}", config.file, e),
-        Ok(reader) => {
+        Ok(file) => {
+            let reader = BufReader::new(file);
             let lines = reader
                 .lines()
                 .map(|l| match l {
@@ -75,13 +76,6 @@ pub fn run(config: Config) -> Result<()> {
     }
 
     Ok(())
-}
-
-fn open(filename: &str) -> Result<Box<dyn BufRead>> {
-    match filename {
-        "-" => Ok(Box::new(BufReader::new(io::stdin()))),
-        _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
-    }
 }
 
 fn cartesian_product<'a>(input: &'a [String]) -> Result<Vec<Draw>> {
