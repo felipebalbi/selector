@@ -5,9 +5,9 @@ use std::{
     error::Error,
     fmt::Display,
     fs::File,
-    io::{self, BufRead, BufReader},
+    io::{stdin, stdout, BufRead, BufReader, Write},
 };
-use termion::{color, style};
+use termion::{color, input::TermRead, raw::IntoRawMode, style};
 
 pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
@@ -72,17 +72,44 @@ pub fn run(config: Config) -> Result<()> {
             let mut data = cartesian_product(&lines)?;
 
             data.shuffle(&mut rng);
-            println!("Press <RET> to continue");
 
-            for draw in data {
-                let stdin = io::stdin();
-                let mut handle = stdin.lock();
-                let mut buffer = String::new();
+            let stdin = stdin();
+            let mut stdout = stdout().into_raw_mode()?;
 
-                handle.read_line(&mut buffer)?;
+            write!(
+                stdout,
+                "{}{}Press any key to continue...{}",
+                termion::clear::All,
+                termion::cursor::Goto(1, 1),
+                termion::cursor::Hide
+            )?;
+            stdout.flush()?;
 
-                println!("{}", draw);
+            let mut data = data.iter();
+
+            for _key in stdin.keys() {
+                if let Some(draw) = data.next() {
+                    write!(
+                        stdout,
+                        "{}{}{}",
+                        termion::cursor::Goto(5, 3),
+                        termion::clear::CurrentLine,
+                        draw
+                    )?;
+                    stdout.flush()?;
+                } else {
+                    write!(
+                        stdout,
+                        "{}{}",
+                        termion::clear::All,
+                        termion::cursor::Goto(1, 1)
+                    )?;
+                    stdout.flush()?;
+                    break;
+                }
             }
+
+            write!(stdout, "{}", termion::cursor::Show).unwrap();
         }
     }
 
