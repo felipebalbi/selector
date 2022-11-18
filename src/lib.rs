@@ -42,11 +42,12 @@ impl<'a> Display for Draw<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}{}{} {}-> {}{}{}",
+            "{}{}{:>10} {}{:^10}{}{}{:<10}",
             style::Bold,
             color::Fg(color::Red),
             self.from,
             color::Fg(color::Yellow),
+            "→",
             color::Fg(color::Green),
             self.to,
             style::Reset
