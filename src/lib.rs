@@ -7,6 +7,7 @@ use std::{
     fs::File,
     io::{self, BufRead, BufReader},
 };
+use termion::{color, style};
 
 pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
@@ -38,7 +39,17 @@ impl<'a> Draw<'a> {
 
 impl<'a> Display for Draw<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} -> {}", self.from, self.to)
+        write!(
+            f,
+            "{}{}{} {}-> {}{}{}",
+            style::Bold,
+            color::Fg(color::Red),
+            self.from,
+            color::Fg(color::Yellow),
+            color::Fg(color::Green),
+            self.to,
+            style::Reset
+        )
     }
 }
 
