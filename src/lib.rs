@@ -85,6 +85,9 @@ pub fn run(config: Config) -> Result<()> {
                 termion::cursor::Goto(1, 1),
                 termion::cursor::Hide
             )?;
+
+            write!(stdout, "{}🎅🎄🤶", termion::cursor::Goto(13, 5))?;
+
             stdout.flush()?;
 
             let mut data = data.iter();
