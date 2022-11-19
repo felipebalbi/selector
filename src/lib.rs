@@ -8,7 +8,7 @@ use std::{
     fs::File,
     io::{stdin, stdout, BufRead, BufReader, Write},
 };
-use termion::{color, event::Key, input::TermRead, raw::IntoRawMode, style};
+use termion::{color, event::Key, input::TermRead, raw::IntoRawMode, style, terminal_size};
 
 pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
@@ -56,6 +56,10 @@ impl<'a> Display for Draw<'a> {
 }
 
 pub fn run(config: Config) -> Result<()> {
+    let (width, height) = terminal_size()?;
+    let center_col = 1 + width / 2;
+    let center_row = 1 + height / 2;
+
     match File::open(&config.file) {
         Err(e) => eprintln!("Failed to open {}: {}", config.file, e),
         Ok(file) => {
@@ -86,7 +90,11 @@ pub fn run(config: Config) -> Result<()> {
                 termion::cursor::Hide
             )?;
 
-            write!(stdout, "{}🎅🎄🤶", termion::cursor::Goto(13, 5))?;
+            write!(
+                stdout,
+                "{}🎅🎄🤶",
+                termion::cursor::Goto(center_col - 1, center_row + 1)
+            )?;
 
             stdout.flush()?;
 
@@ -104,7 +112,7 @@ pub fn run(config: Config) -> Result<()> {
                             write!(
                                 stdout,
                                 "{}{}{}",
-                                termion::cursor::Goto(5, 3),
+                                termion::cursor::Goto(center_col - 10, center_row),
                                 termion::clear::CurrentLine,
                                 draw
                             )?;
