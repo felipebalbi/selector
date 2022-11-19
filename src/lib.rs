@@ -42,7 +42,7 @@ impl<'a> Display for Draw<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}{}{:>10} {}{:^10}{}{}{:<10}",
+            "{}{}{:>10} {}{} {}{}{:<10}",
             style::Bold,
             color::Fg(color::Red),
             self.from,
