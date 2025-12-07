@@ -17,6 +17,7 @@ impl MerryXmas {
         Self
     }
 
+    #[must_use]
     pub fn as_str(&self) -> &'static str {
         indoc! {"
                  ▄▄▄  ▄▄▄                                                    ▄▄▄  ▄▄▄                               
@@ -70,12 +71,13 @@ pub struct PairsState {
 }
 
 impl PairsState {
+    #[must_use]
     pub fn new(data: Vec<(String, String)>) -> Self {
         Self {
             started: false,
             data: Box::new(data.into_iter()),
-            from: Default::default(),
-            to: Default::default(),
+            from: String::from("Press <SPC>"),
+            to: String::from("start"),
         }
     }
 
@@ -88,7 +90,7 @@ impl PairsState {
             self.from = from;
             self.to = to;
         } else {
-            self.from = "Press 'q'".into();
+            self.from = "Press <Q>".into();
             self.to = "exit".into();
         }
     }
@@ -98,6 +100,7 @@ impl PairsState {
 pub struct Pairs;
 
 impl Pairs {
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
@@ -110,27 +113,15 @@ impl StatefulWidget for Pairs {
         let padding = 3;
 
         // big text
-        let text = if state.started {
-            BigText::builder()
-                .centered()
-                .pixel_size(PixelSize::HalfHeight)
-                .lines(vec![
-                    state.from.clone().blue().into(),
-                    "to".into(),
-                    state.to.clone().blue().into(),
-                ])
-                .build()
-        } else {
-            BigText::builder()
-                .centered()
-                .pixel_size(PixelSize::HalfHeight)
-                .lines(vec![
-                    "Press".blue().into(),
-                    "<SPACE>".into(),
-                    "to start".blue().into(),
-                ])
-                .build()
-        };
+        let text = BigText::builder()
+            .centered()
+            .pixel_size(PixelSize::HalfHeight)
+            .lines(vec![
+                state.from.clone().blue().into(),
+                "to".into(),
+                state.to.clone().blue().into(),
+            ])
+            .build();
 
         // compute the height of the big text
         let para_height = 11 + padding * 2;
@@ -157,16 +148,13 @@ pub struct SnowField {
 }
 
 impl SnowField {
-    pub fn new(width: u16, height: u16, count: usize) -> Self {
-        let mut rng = rand::rng();
-        let flakes = (0..count)
-            .map(|_| (rng.random_range(0..width), rng.random_range(0..height)))
-            .collect();
+    #[must_use]
+    pub fn new(count: usize) -> Self {
         Self {
-            width,
-            height,
+            width: 0,
+            height: 0,
             count,
-            flakes,
+            flakes: vec![],
         }
     }
 
@@ -189,7 +177,7 @@ impl SnowField {
 
         // randomly add/remove a few flakes for twinkle
         let mut rng = rand::rng();
-        if rng.random_bool(0.5) {
+        if rng.random_bool(0.3) {
             let i = rng.random_range(0..self.flakes.len());
             self.flakes[i] = (
                 rng.random_range(0..self.width),

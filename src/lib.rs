@@ -41,8 +41,9 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(config: Config) -> Self {
-        let data = generate_pairs(&config.file).unwrap_or(vec![]);
+    #[must_use]
+    pub fn new(config: &Config) -> Self {
+        let data = generate_pairs(&config.file).unwrap_or_default();
         let state = PairsState::new(data);
 
         Self { state }
@@ -68,8 +69,13 @@ impl Widget for &mut App {
     }
 }
 
+/// generates pairs of strings from file input
+///
+/// # Errors
+///
+/// Bails out if file doesn't exist or is unreadable.
 pub fn generate_pairs(path: &str) -> Result<Vec<(String, String)>> {
-    match File::open(&path) {
+    match File::open(path) {
         Err(e) => Err(eyre!("Failed to open '{}': {}", path, e)),
         Ok(file) => {
             let reader = BufReader::new(file);
@@ -78,7 +84,7 @@ pub fn generate_pairs(path: &str) -> Result<Vec<(String, String)>> {
                 .map(|l| match l {
                     Ok(line) => line,
                     Err(e) => {
-                        eprintln!("Failed to read line: {}", e);
+                        eprintln!("Failed to read line: {e}");
                         String::new()
                     }
                 })

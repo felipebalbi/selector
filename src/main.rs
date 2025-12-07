@@ -17,8 +17,8 @@ fn main() -> Result<()> {
 
 fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let config = Config::parse();
-    let mut app = App::new(config);
-    let mut snowfield = SnowField::new(200, 100, 600);
+    let mut app = App::new(&config);
+    let mut snowfield = SnowField::new(600);
 
     loop {
         terminal.draw(|frame| {

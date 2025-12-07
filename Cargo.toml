@@ -14,3 +14,8 @@ ratatui = "0.29.0"
 termion = "4.0.6"
 tui-big-text = "0.7.3"
 
+[lints.clippy]
+correctness = "warn"
+perf = "warn"
+pedantic = "warn"
+
