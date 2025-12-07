@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = { version = "4.0.26", features = ["derive"] }
-itertools = "0.10.5"
-rand = "0.8.5"
-termion = "2.0.1"
+clap = { version = "4.5.53", features = ["derive"] }
+itertools = "0.14.0"
+rand = "0.9"
+termion = "4.0.6"
 

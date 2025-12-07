@@ -1,7 +1,7 @@
 use clap::Parser;
 use itertools::{iproduct, Itertools};
+use rand::rng;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
 use std::{
     error::Error,
     fmt::Display,
@@ -27,18 +27,18 @@ pub struct Config {
     file: String,
 }
 
-struct Draw<'a> {
-    from: &'a str,
-    to: &'a str,
+struct Draw {
+    from: String,
+    to: String,
 }
 
-impl<'a> Draw<'a> {
-    fn new(from: &'a str, to: &'a str) -> Self {
+impl Draw {
+    fn new(from: String, to: String) -> Self {
         Self { from, to }
     }
 }
 
-impl<'a> Display for Draw<'a> {
+impl Display for Draw {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -74,8 +74,8 @@ pub fn run(config: Config) -> Result<()> {
                     }
                 })
                 .collect::<Vec<_>>();
-            let mut rng = thread_rng();
-            let mut data = cartesian_product(&lines);
+            let mut rng = rng();
+            let mut data = cartesian_product(lines);
 
             data.shuffle(&mut rng);
 
@@ -138,8 +138,8 @@ pub fn run(config: Config) -> Result<()> {
     Ok(())
 }
 
-fn cartesian_product(lines: &[String]) -> Vec<Draw> {
-    iproduct!(lines.iter(), lines.iter())
+fn cartesian_product(lines: Vec<String>) -> Vec<Draw> {
+    iproduct!(lines.clone().into_iter(), lines.into_iter())
         .filter(|(a, b)| a != b)
         .map(|(a, b)| Draw::new(a, b))
         .collect_vec()
