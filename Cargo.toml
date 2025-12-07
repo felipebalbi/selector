@@ -5,7 +5,12 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.53", features = ["derive"] }
+color-eyre = "0.6.5"
+crossterm = "0.29.0"
+indoc = "2.0.7"
 itertools = "0.14.0"
 rand = "0.9"
+ratatui = "0.29.0"
 termion = "4.0.6"
+tui-big-text = "0.7.3"
 

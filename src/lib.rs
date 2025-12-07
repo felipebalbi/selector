@@ -1,16 +1,25 @@
 use clap::Parser;
+use color_eyre::{eyre::eyre, Result};
 use itertools::{iproduct, Itertools};
 use rand::rng;
 use rand::seq::SliceRandom;
-use std::{
-    error::Error,
-    fmt::Display,
-    fs::File,
-    io::{stdin, stdout, BufRead, BufReader, Write},
+use ratatui::{
+    buffer::Buffer,
+    layout::{
+        Constraint::{Fill, Length},
+        Layout, Rect,
+    },
+    widgets::{StatefulWidget, Widget},
+    Frame,
 };
-use termion::{color, event::Key, input::TermRead, raw::IntoRawMode, style, terminal_size};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+};
 
-pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
+use crate::widgets::{Help, MerryXmas, Pairs, PairsState};
+
+pub mod widgets;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -27,41 +36,41 @@ pub struct Config {
     file: String,
 }
 
-struct Draw {
-    from: String,
-    to: String,
+pub struct App {
+    state: PairsState,
 }
 
-impl Draw {
-    fn new(from: String, to: String) -> Self {
-        Self { from, to }
+impl App {
+    pub fn new(config: Config) -> Self {
+        let data = generate_pairs(&config.file).unwrap_or(vec![]);
+        let state = PairsState::new(data);
+
+        Self { state }
+    }
+
+    pub fn draw(&mut self, frame: &mut Frame) {
+        frame.render_widget(self, frame.area());
+    }
+
+    pub fn handle_spacebar(&mut self) {
+        self.state.start();
+        self.state.tick();
     }
 }
 
-impl Display for Draw {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}{}{:>10} {}{} {}{}{:<10}",
-            style::Bold,
-            color::Fg(color::Red),
-            self.from,
-            color::Fg(color::Yellow),
-            "→",
-            color::Fg(color::Green),
-            self.to,
-            style::Reset
-        )
+impl Widget for &mut App {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let [top, mid, bottom] = Layout::vertical([Length(12), Fill(1), Length(5)]).areas(area);
+
+        MerryXmas::new().render(top, buf);
+        Pairs::new().render(mid, buf, &mut self.state);
+        Help::new().render(bottom, buf);
     }
 }
 
-pub fn run(config: Config) -> Result<()> {
-    let (width, height) = terminal_size()?;
-    let center_col = 1 + width / 2;
-    let center_row = 1 + height / 2;
-
-    match File::open(&config.file) {
-        Err(e) => eprintln!("Failed to open {}: {}", config.file, e),
+pub fn generate_pairs(path: &str) -> Result<Vec<(String, String)>> {
+    match File::open(&path) {
+        Err(e) => Err(eyre!("Failed to open '{}': {}", path, e)),
         Ok(file) => {
             let reader = BufReader::new(file);
             let lines = reader
@@ -76,71 +85,14 @@ pub fn run(config: Config) -> Result<()> {
                 .collect::<Vec<_>>();
             let mut rng = rng();
             let mut data = cartesian_product(lines);
-
             data.shuffle(&mut rng);
-
-            let stdin = stdin();
-            let mut stdout = stdout().into_raw_mode()?;
-
-            write!(
-                stdout,
-                "{}{}Press any key to continue...{}",
-                termion::clear::All,
-                termion::cursor::Goto(1, 1),
-                termion::cursor::Hide
-            )?;
-
-            write!(
-                stdout,
-                "{}🎅🎄🤶",
-                termion::cursor::Goto(center_col - 1, center_row + 1)
-            )?;
-
-            stdout.flush()?;
-
-            let mut data = data.iter();
-
-            for key in stdin.keys() {
-                let key = key?;
-
-                match key {
-                    Key::Ctrl('q') | Key::Ctrl('c') => {
-                        break;
-                    }
-                    _ => {
-                        if let Some(draw) = data.next() {
-                            write!(
-                                stdout,
-                                "{}{}{}",
-                                termion::cursor::Goto(center_col - 10, center_row),
-                                termion::clear::CurrentLine,
-                                draw
-                            )?;
-                            stdout.flush()?;
-                        } else {
-                            break;
-                        }
-                    }
-                }
-            }
-
-            write!(
-                stdout,
-                "{}{}",
-                termion::clear::All,
-                termion::cursor::Goto(1, 1)
-            )?;
-            stdout.flush()?;
-            write!(stdout, "{}", termion::cursor::Show).unwrap();
+            Ok(data)
         }
     }
-
-    Ok(())
 }
 
-fn cartesian_product(lines: Vec<String>) -> Vec<Draw> {
+fn cartesian_product(lines: Vec<String>) -> Vec<(String, String)> {
     iproduct!(lines.clone().into_iter(), lines.into_iter())
         .filter(|(a, b)| a != b)
-        .map(|(a, b)| Draw::new(a, b))
         .collect_vec()
 }
